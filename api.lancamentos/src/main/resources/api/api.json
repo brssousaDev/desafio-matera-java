@@ -1,0 +1,222 @@
+{
+  "openapi": "3.0.1",
+  "info": {
+    "title": "API de Lançamentos Bancários",
+    "description": "API RESTful para realizar transações de débito e crédito e consultar saldos, com garantia de consistência.",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/v1"
+    }
+  ],
+  "paths": {
+    "/contas/{numeroConta}/saldo": {
+      "parameters": [
+        {
+          "name": "numeroConta",
+          "in": "path",
+          "description": "Número de identificação da conta (ex: 0001-123456-7)",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "0001-123456-7"
+          }
+        }
+      ],
+      "get": {
+        "summary": "Obtém o saldo atual de uma conta",
+        "operationId": "getSaldo",
+        "tags": [
+          "Contas"
+        ],
+        "responses": {
+          "200": {
+            "description": "Saldo retornado com sucesso.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaldoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta não encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/contas/{numeroConta}/transacoes": {
+      "parameters": [
+        {
+          "name": "numeroConta",
+          "in": "path",
+          "description": "Número de identificação da conta (ex: 0001-123456-7)",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "example": "0001-123456-7"
+          }
+        }
+      ],
+      "post": {
+        "summary": "Realiza um ou mais lançamentos (débito/crédito)",
+        "description": "Processa uma lista de transações de forma atômica. Ou todas são processadas ou nenhuma é.",
+        "operationId": "realizarTransacoes",
+        "tags": [
+          "Contas"
+        ],
+        "requestBody": {
+          "description": "Lista de transações a serem processadas.",
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/TransacaoRequest"
+                },
+                "minItems": 1
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Transações processadas com sucesso. Retorna o novo saldo.",
+            "content": {
+              "application/hal+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SaldoResponse"
+                }
+              }
+            }
+          },
+          "404": {
+            "description": "Conta não encontrada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          },
+          "422": {
+            "description": "Erro de negócio (ex: Saldo Insuficiente). A transação foi rejeitada e nenhuma operação foi processada (rollback).",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ErrorResponse"
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "TransacaoRequest": {
+        "type": "object",
+        "properties": {
+          "tipo": {
+            "type": "string",
+            "enum": [
+              "DEBITO",
+              "CREDITO"
+            ]
+          },
+          "valor": {
+            "type": "string",
+            "description": "Valor monetário como string para evitar perda de precisão.",
+            "example": "150.75"
+          }
+        },
+        "required": [
+          "tipo",
+          "valor"
+        ]
+      },
+      "SaldoResponse": {
+        "type": "object",
+        "properties": {
+          "numeroConta": {
+            "type": "string",
+            "example": "0001-123456-7"
+          },
+          "saldo": {
+            "type": "string",
+            "description": "Saldo monetário atualizado como string.",
+            "example": "1230.25"
+          },
+          "_links": {
+            "$ref": "#/components/schemas/Links"
+          }
+        },
+        "required": [
+          "numeroConta",
+          "saldo"
+        ]
+      },
+      "ErrorResponse": {
+        "type": "object",
+        "properties": {
+          "timestamp": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "integer"
+          },
+          "error": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "timestamp",
+          "status",
+          "message"
+        ]
+      },
+      "Links": {
+        "type": "object",
+        "properties": {
+          "self": {
+            "type": "object",
+            "properties": {
+              "href": {
+                "type": "string",
+                "format": "uri"
+              }
+            }
+          }
+        },
+        "additionalProperties": {
+          "type": "object",
+          "properties": {
+            "href": {
+              "type": "string",
+              "format": "uri"
+            }
+          }
+        }
+      }
+    }
+  }
+}
