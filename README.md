@@ -14,7 +14,7 @@ Esta é uma API RESTful desenvolvida em Java e Spring Boot como solução para u
 1.  **Clone o repositório:**
     ```bash
     git clone git@github.com:brssousaDev/desafio-matera-java.git
-    cd api.lancamentos/
+    cd desafio-matera-java/
     ```
 
 2.  **Compile o projeto com Maven:**
