@@ -1,0 +1,7 @@
+# OpenAPI Generator Ignore
+# Ignorar toda a estrutura de testes gerada
+src/test/**
+pom.xml
+README.md
+.openapi-generator-ignore
+
